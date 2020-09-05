@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pick&Plot</title>
+</head>
+<body>
+    <form id="load" enctype="multipart/form-data">
+        <p>Select one or more files to upload:</p>
+        <input id="csvs" type="file" name="uploadFile" multiple="multiple" accept="csv" />
+        <p>To select multiple files, hold down the CTRL or SHIFT key while selecting.</p>
+        <p>Please select High-Low values to be plotted in the graph</p>
+        <ul id="unorderedList">
+            <li><input type="checkbox" id="checkbox1" value="LessThanPoint2"> Less than 0.2</li>
+            <li><input type="checkbox" id="checkbox2" value="BetweenPoint2andPoint5"> Between 0.2 to 0.5</li>
+            <li><input type="checkbox" id="checkbox3" value="BetweenPoint5and1"> Between 0.5 to 1</li>
+            <li><input type="checkbox" id="checkbox4" value="Between1and2"> Between 1 to 2</li>
+            <li><input type="checkbox" id="checkbox5" value="Between2and3"> Between 2 to 3</li>
+            <li><input type="checkbox" id="checkbox6" value="Above1"> Above 1</li>
+            <li><input type="checkbox" id="checkbox7" value="Above2"> Above 2</li>
+            <li><input type="checkbox" id="checkbox8" value="Above3"> Above 3</li>
+        </ul>
+        <input type="button" value="Submit" onclick="getAndProcessFiles()"/>
+        <br /><br />
+    </form>
+    
+    <div id="chartDiv1"></div><br /><br />
+    <div id="chartDiv2"></div><br /><br />
+    <div id="chartDiv3"></div><br /><br />
+    <div id="chartDiv4"></div><br /><br />
+    <div id="chartDiv5"></div><br /><br />
+    <div id="chartDiv6"></div><br /><br />
+    <div id="chartDiv7"></div><br /><br />
+    <div id="chartDiv8"></div><br /><br />
+</body>
+<script src="https://code.jscharting.com/2.9.0/jscharting.js"></script>
+<script src="js/index.js"></script>
+<head>
+    <link rel="stylesheet" href="styles/styles.css">
+</head>
+</html>
