@@ -1,6 +1,9 @@
+var plotCount=0;
+
 async function getAndProcessFiles() {
 	var files = document.getElementById("csvs").files;
 	let map = new Map();
+	plotCount=0;
 	for (const file of files) {	
 		const data = await new Response(file).text();
 		var js = JSC.csv2Json(data, {
@@ -20,56 +23,43 @@ async function getAndProcessFiles() {
 }
 
 function readAndPlotBarLineOnVol(map) {
-	let seriesArray = [];
 	for (let fileName of map.keys()) {
-		let count = 0;
-		map.get(fileName).forEach(function (row) {
-			if(count === 0 || count === 5 ) {
-				seriesArray.push({x: row.Date, y: row.Volume});
-				if(count === 5) count = 0;
-			}
-			count++;
+		let seriesArray = [];
+		map.get(fileName).forEach(function (row) {	
+			seriesArray.push({x: row.Date, y: row.Volume});
 		});
+		plotCount = plotCount+1;
+		let para = createDiv();
+		renderBarChart([
+			{name: 'Volume', points: seriesArray},
+		], para, fileName);
 	}
-	//console.log(hiLoSeriesArray);
-	renderBarChart([
-		{name: 'Volume', points: seriesArray},
-	], 'chartDiv7');
-	renderLineChart([
-		{name: 'Volume', points: seriesArray},
-	], 'chartDiv8');
 }
 
 function readAndPlotBarOnHiLoCpOp(map) {
-	let hiLoSeriesArray = [], coOpSeriesArray = [];
 	for (let fileName of map.keys()) {
+		let coOpSeriesArray = [];
 		let count = 0;
 		map.get(fileName).forEach(function (row) {
-			row["HighLow"]=row.High-row.Low;
 			row["CloseOpen"]=row.Close-row.Open;
 			if(count === 0 || count === 5 ) {
-				hiLoSeriesArray.push({x: row.Date, y: row.HighLow});
 				coOpSeriesArray.push({x: row.Date, y: row.CloseOpen});
 				if(count === 5) count = 0;
 			}
 			count++;
 		});
+		plotCount = plotCount+1;
+		let para = createDiv();
+		renderBarChart([
+			{name: 'Co-Op', points: coOpSeriesArray}
+		], para, fileName);
 	}
-	//console.log(hiLoSeriesArray);
-	renderBarChart([
-		{name: 'Hi-Lo', points: hiLoSeriesArray},
-		{name: 'Co-Op', points: coOpSeriesArray},
-	], 'chartDiv5');
-	renderLineChart([
-		{name: 'Hi-Lo', points: hiLoSeriesArray},
-		{name: 'Co-Op', points: coOpSeriesArray},
-	], 'chartDiv6');
 }
 
 function readAndPlotLineOnAllParams(map) {
-	let openSeriesArray = [], highSeriesArray = [], 
-		lowSeriesArray = [], closeSeriesArray = [];
 	for (let fileName of map.keys()) {
+		let openSeriesArray = [], highSeriesArray = [], 
+			lowSeriesArray = [], closeSeriesArray = [];
 		let count = 0;
 		map.get(fileName).forEach(function (row) {
 			if(count === 0 || count === 5 ) {
@@ -82,45 +72,40 @@ function readAndPlotLineOnAllParams(map) {
 			}
 			count++;
 		});
+		plotCount = plotCount+1;
+		let para = createDiv();
+		renderLineChart([
+			{name: 'Open', points: openSeriesArray},
+			{name: 'High', points: highSeriesArray},
+			{name: 'Low', points: lowSeriesArray},
+			{name: 'Close', points: closeSeriesArray}
+		], para, fileName);
 	}
-	renderLineChart([
-		{name: 'Open', points: openSeriesArray},
-		{name: 'High', points: highSeriesArray},
-		{name: 'Low', points: lowSeriesArray},
-		{name: 'Close', points: closeSeriesArray}
-	], 'chartDiv4');
 }
 
 function readAndPlotBarOnCloseOpen(map) {
 	let posPointArray = [], negPointArray = [], totalPointArray = [];
-	let posSeriesArray = [], negSeriesArray = [], totalSeriesArray = [];
 	for (let fileName of map.keys()) {
 		let numOfPosDays = 0, numOfNegDays = 0;
 		map.get(fileName).forEach(function (row) {
 			row["CloseOpen"]=row.Close-row.Open;
 			if(row.Close-row.Open > 0) {
 				++numOfPosDays;
-				posSeriesArray.push({x: fileName.split('.')[0], y: row.CloseOpen});
 			} else {
 				++numOfNegDays;
-				negSeriesArray.push({x: fileName.split('.')[0], y: row.CloseOpen});
 			}
-			totalSeriesArray.push({x: fileName.split('.')[0], y: row.CloseOpen});
 		});
 		posPointArray.push({x: fileName.split('.')[0], y: numOfPosDays});
 		negPointArray.push({x: fileName.split('.')[0], y: numOfNegDays});
 		totalPointArray.push({x: fileName.split('.')[0], y: numOfPosDays + numOfNegDays});
 	}
+	plotCount = plotCount+1;
+	let para = createDiv();
 	renderBarChart([
 		{name: '# of +ve days', points: posPointArray},
 		{name: '# of -ve days', points: negPointArray},
 		{name: 'Total # of entry', points: totalPointArray}
-	], 'chartDiv2');
-	renderLineChart([
-		{name: '# of +ve days', points: posSeriesArray},
-		{name: '# of -ve days', points: negSeriesArray},
-		{name: 'Total # of entry', points: totalSeriesArray}
-	], 'chartDiv3');
+	], para, '');
 }
 
 function readAndPlotBarOnCheckbox(map) {
@@ -141,7 +126,9 @@ function readAndPlotBarOnCheckbox(map) {
 		}
 		prepareBarPlotData(fileNameAray, fileName, filtersArray1, map.get(fileName).length);
 	}
-	renderBarChart(filtersArray1, 'chartDiv1');
+	plotCount = plotCount+1;
+	let para = createDiv();
+	renderBarChart(filtersArray1, para, '');
 }
 
 function prepareBarPlotData(fileNameAray, fileName, filtersArray1, len) {
@@ -207,10 +194,18 @@ function checkCondition1(caseCond, row, filtersArray) {
 	}
 }
 
-function renderBarChart(series, chartDiv) {
+function renderBarChart(series, chartDiv, titleText) {
 	JSC.Chart(chartDiv, {
 		defaultPoint: {
 			label_text: '%yValue',
+		},
+		title: {
+			position: 'center',
+			label: {
+			  align: 'center',
+			  text: '<b>'+titleText+'</b>',
+			  style_fontWeight: 'normal'
+			}
 		},
 		type: 'Column',
 		legend_visible: true,
@@ -223,13 +218,20 @@ function renderBarChart(series, chartDiv) {
 		  },
 		//xAxis_crosshair_enabled: true,
 		defaultPoint_tooltip: '%seriesName <b>%yValue<b>',
-		series: series,
-		debug: true
+		series: series
 	});
 }
 
-function renderLineChart(series, chartDiv) {
+function renderLineChart(series, chartDiv, titleText) {
 	JSC.Chart(chartDiv, {
+		title: {
+			position: 'center',
+			label: {
+			  align: 'center',
+			  text: '<b>'+titleText+'</b>',
+			  style_fontWeight: 'normal'
+			}
+		},
 		legend_visible: true,
 		legend: { 
 			position: 'bottom', 
@@ -242,4 +244,16 @@ function renderLineChart(series, chartDiv) {
 		defaultPoint_tooltip: '%seriesName <b>%yValue</b>',
 		series: series
 	});
+}
+
+function createDiv() {
+	let divId = 'chartDiv'+plotCount;
+	if(null != document.getElementById(divId))
+		document.getElementById(divId).remove();
+	
+	let para = document.createElement("div");
+	para.id=divId;
+
+	document.getElementById("allCharts").appendChild(para);
+	return para;
 }
