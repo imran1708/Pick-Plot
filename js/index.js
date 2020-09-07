@@ -1,25 +1,41 @@
+window.onbeforeunload = function () {
+    window.scrollTo(0,0);
+};
+
 var plotCount=0;
 
 async function getAndProcessFiles() {
 	var files = document.getElementById("csvs").files;
+
+	if(files.length === 0) {
+		alert("Please select input files");
+        document.getElementById("csvs").focus();
+
+        return false;
+	}
 	let map = new Map();
 	plotCount=0;
-	for (const file of files) {	
-		const data = await new Response(file).text();
-		var js = JSC.csv2Json(data, {
-			coerce: (d, i, types) => {
-				columns: ["Date", "Open", "High", "Low", "Close", "AdjClose", "Volume"]
-			  return {Date: d.Date, Open: d.Open, High: d.High, Low: d.Low,
-						Close: d.Close, AdjClose: d.AdjClose, Volume: d.Volume};
-			}
-		  });
-		map.set(file.name, js);
+	try {
+		for (const file of files) {	
+			const data = await new Response(file).text();
+			var js = JSC.csv2Json(data, {
+				coerce: (d, i, types) => {
+					columns: ["Date", "Open", "High", "Low", "Close", "AdjClose", "Volume"]
+				  return {Date: d.Date, Open: d.Open, High: d.High, Low: d.Low,
+							Close: d.Close, AdjClose: d.AdjClose, Volume: d.Volume};
+				}
+			  });
+			map.set(file.name, js);
+		}
+		readAndPlotBarOnCheckbox(map);
+		readAndPlotBarOnCloseOpen(map);
+		readAndPlotLineOnAllParams(map);
+		readAndPlotBarOnHiLoCpOp(map);
+		readAndPlotBarLineOnVol(map);
 	}
-	readAndPlotBarOnCheckbox(map);
-	readAndPlotBarOnCloseOpen(map);
-	readAndPlotLineOnAllParams(map);
-	readAndPlotBarOnHiLoCpOp(map);
-	readAndPlotBarLineOnVol(map);
+	catch(err) {
+		alert(err.message);
+	}
 }
 
 function readAndPlotBarLineOnVol(map) {
@@ -39,14 +55,9 @@ function readAndPlotBarLineOnVol(map) {
 function readAndPlotBarOnHiLoCpOp(map) {
 	for (let fileName of map.keys()) {
 		let coOpSeriesArray = [];
-		let count = 0;
 		map.get(fileName).forEach(function (row) {
 			row["CloseOpen"]=row.Close-row.Open;
-			if(count === 0 || count === 5 ) {
-				coOpSeriesArray.push({x: row.Date, y: row.CloseOpen});
-				if(count === 5) count = 0;
-			}
-			count++;
+			coOpSeriesArray.push({x: row.Date, y: row.CloseOpen});
 		});
 		plotCount = plotCount+1;
 		let para = createDiv();
@@ -60,17 +71,11 @@ function readAndPlotLineOnAllParams(map) {
 	for (let fileName of map.keys()) {
 		let openSeriesArray = [], highSeriesArray = [], 
 			lowSeriesArray = [], closeSeriesArray = [];
-		let count = 0;
 		map.get(fileName).forEach(function (row) {
-			if(count === 0 || count === 5 ) {
-				openSeriesArray.push({x: row.Date, y: parseInt(row.Open)});
-				highSeriesArray.push({x: row.Date, y: parseInt(row.High)});
-				lowSeriesArray.push({x: row.Date, y: parseInt(row.Low)});
-				closeSeriesArray.push({x: row.Date, y: parseInt(row.Close)});
-
-				if(count === 5) count = 0;
-			}
-			count++;
+			openSeriesArray.push({x: row.Date, y: parseInt(row.Open)});
+			highSeriesArray.push({x: row.Date, y: parseInt(row.High)});
+			lowSeriesArray.push({x: row.Date, y: parseInt(row.Low)});
+			closeSeriesArray.push({x: row.Date, y: parseInt(row.Close)});
 		});
 		plotCount = plotCount+1;
 		let para = createDiv();
