@@ -54,15 +54,23 @@ function readAndPlotBarLineOnVol(map) {
 
 function readAndPlotBarOnHiLoCpOp(map) {
 	for (let fileName of map.keys()) {
-		let coOpSeriesArray = [];
+		let coOpSeriesArray = [], hiLoSeriesArray = [];
 		map.get(fileName).forEach(function (row) {
 			row["CloseOpen"]=row.Close-row.Open;
+			row["HighLow"]=row.High-row.Low;
 			coOpSeriesArray.push({x: row.Date, y: row.CloseOpen});
+			hiLoSeriesArray.push({x: row.Date, y: row.HighLow});
 		});
 		plotCount = plotCount+1;
 		let para = createDiv();
 		renderBarChart([
 			{name: 'Co-Op', points: coOpSeriesArray}
+		], para, fileName);
+
+		plotCount = plotCount+1;
+		para = createDiv();
+		renderBarChart([
+			{name: 'Hi-Lo', points: hiLoSeriesArray}
 		], para, fileName);
 	}
 }
